@@ -23,22 +23,47 @@
 .size _vector_table, . - _vector_table
 
 _vector_table:
-    .word _estack                               /* Initial stack pointer */
-    .word Reset_Handler                         /* Reset vector */
-    .word NMI                                   /* NMI Handler */
-    .word Hard_Fault                            /* Hard Fault Handler */
-    .word Mem_Manage                            /* Memory Management Fault Handler */
-    .word Bus_Fault                             /* Bus Fault Handler */
-    .word Usage_Fault                           /* Usage Fault Handler */
-    .word 0                                     /* Reserved */
-    .word 0                                     /* Reserved */
-    .word 0                                     /* Reserved */
-    .word 0                                     /* Reserved */
-    .word SVCall                                /* Supervisor Call */
-    .word Debug_Monitor                         /* Debug Monitor */
-    .word 0                                     /* Reserved */
-    .word PendSV                                /* Pendable Service Request */
-    .word Systick                               /* SysTick Timer */
+    .word _estack
+    .word Reset_Handler
+    .word NMI
+    .word Hard_Fault
+    .word Mem_Manage
+    .word Bus_Fault
+    .word Usage_Fault
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .word SVCall
+    .word Debug_Monitor
+    .word 0
+    .word PendSV
+    .word Systick
+    .word 0          // IRQ0: WWDG
+    .word 0          // IRQ1: PVD
+    .word 0          // IRQ2: TAMP_STAMP
+    .word 0          // IRQ3: RTC_WKUP
+    .word 0          // IRQ4: FLASH
+    .word 0          // IRQ5: RCC
+    .word 0          // IRQ6: EXTI0
+    .word 0          // IRQ7: EXTI1
+    .word 0          // IRQ8: EXTI2
+    .word 0          // IRQ9: EXTI3
+    .word 0          // IRQ10: EXTI4
+    .word 0          // IRQ11: DMA1_Stream0
+    .word 0          // IRQ12: DMA1_Stream1
+    .word 0          // IRQ13: DMA1_Stream2
+    .word 0          // IRQ14: DMA1_Stream3
+    .word 0          // IRQ15: DMA1_Stream4
+    .word 0          // IRQ16: DMA1_Stream5
+    .word 0          // IRQ17: DMA1_Stream6
+    .word 0          // IRQ18: ADC
+    .word 0          // IRQ19: CAN1_TX
+    .word 0          // IRQ20: CAN1_RX0
+    .word 0          // IRQ21: CAN1_RX1
+    .word 0          // IRQ22: CAN1_SCE
+    .word EXTI9_5_IRQHandler  // IRQ23
+
 
 .section .text                                  /* Start of program code */
 .global Reset_Handler
@@ -81,7 +106,7 @@ infinite_loop:
    Weak aliases that point to infinite loop
    Can be overridden in user code
 */
-.weak NMI, Hard_Fault, Mem_Manage, Bus_Fault, Usage_Fault, SVCall, Debug_Monitor, PendSV, Systick
+.weak NMI, Hard_Fault, Mem_Manage, Bus_Fault, Usage_Fault, SVCall, Debug_Monitor, PendSV, Systick, EXTI9_5_IRQHandler
 .thumb_set NMI,           infinite_loop
 .thumb_set Hard_Fault,    infinite_loop
 .thumb_set Mem_Manage,    infinite_loop
@@ -91,3 +116,6 @@ infinite_loop:
 .thumb_set Debug_Monitor, infinite_loop
 .thumb_set PendSV,        infinite_loop
 .thumb_set Systick,       infinite_loop
+
+/* EXTI9_5_IRQHandler is implemented in C, so do not alias it */
+

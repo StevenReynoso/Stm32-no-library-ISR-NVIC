@@ -23,6 +23,41 @@ void rcc_gpio_enr(uint8_t bank_num) {
     RCC_AHB1ENR |= (1 << bank_num);                           // Enable clock for corresponding GPIO port
 }
 
+void nvic_enable_irq(void){
+    NVIC_ISER0 |= (1 << 23);
+}
+
+void exti_init(void){
+    RCC_APB2ENR |= (1 << 14);
+
+    SYSCFG_EXTICR3 &= ~(0xF << 4);
+    SYSCFG_EXTICR3 |= (0X0 << 4);
+
+    EXTI_IMR  |= (1 << 9);                                    // IMR = 0 (line X is masked), IMR = 1, (line X is not masked)
+    EXTI_FTSR |= (1 << 9);                                    // Falling trigger 0 = Disabled, Falling Trigger 1 = Enabled.
+}
+
+volatile int step = 0;
+void EXTI9_5_IRQHandler(void) {
+    EXTI_PR |= (1 << 9);  // Clear pending
+
+    // Reset all LEDs
+    GPIO('A')->ODR &= ~((1 << 5) | (1 << 6) | (1 << 7));
+    GPIO('B')->ODR &= ~(1 << 6);
+    GPIO('C')->ODR &= ~(1 << 7);
+
+    // Toggle current LED
+    switch (step) {
+        case 0: GPIO('A')->ODR |= (1 << 5); break;
+        case 1: GPIO('A')->ODR |= (1 << 6); break;
+        case 2: GPIO('A')->ODR |= (1 << 7); break;
+        case 3: GPIO('B')->ODR |= (1 << 6); break;
+        case 4: GPIO('C')->ODR |= (1 << 7); break;
+    }
+
+    step = (step + 1) % 5;
+}
+
 
 /* === gpio_init_pin ===
  * Configures a GPIO pin based on the given configuration struct:
@@ -30,7 +65,7 @@ void rcc_gpio_enr(uint8_t bank_num) {
  * - Sets mode, output type, speed, and pull-up/down configuration
  */
 void gpio_init_pin(gpio_config_t cfg) {
-    struct gpio *gpio = GPIO(PINBANK(cfg.pin));              // Get GPIO port base address
+    struct gpio *gpio = GPIO(PINBANK(cfg.pin) + 'A');              // Get GPIO port base address
     uint8_t gpio_pin = PINNO(cfg.pin);                       // Extract pin number (0–15)
 
     rcc_gpio_enr(PINBANK(cfg.pin));                          // Enable clock for this GPIO bank
