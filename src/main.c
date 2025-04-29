@@ -5,6 +5,8 @@
 #include <stdint.h> 
 #include "gpio.h"
 
+uint32_t SystemCoreClock = 16000000;
+
 int main(void){                                     
     //red
     gpio_config_t led_cfg0 = {                      // creates gpio config for PA5 to control LED
@@ -56,12 +58,15 @@ int main(void){
     };
 
 
+    SysTick_Config(SystemCoreClock / 1000); // 1ms tick
     gpio_init_pin(led_cfg0);                         // initializing pin with our config file
     gpio_init_pin(led_cfg1);
     gpio_init_pin(led_cfg2);
     gpio_init_pin(led_cfg3);
     gpio_init_pin(led_cfg4);
     gpio_init_pin(push_button);
+
+
     exti_init();
     nvic_enable_irq();
   

@@ -1,6 +1,11 @@
 
 #include "gpio.h"
 
+volatile uint32_t last_button_press_time = 0;
+volatile uint32_t current_time = 0;
+volatile uint8_t button_pressed = 0;
+
+
 /* === gpio_set_mode ===
  * Sets the mode of a GPIO pin (input, output, alternate function, analog).
  * - Extracts GPIO bank and pin number from encoded `pin`.
@@ -37,26 +42,57 @@ void exti_init(void){
     EXTI_FTSR |= (1 << 9);                                    // Falling trigger 0 = Disabled, Falling Trigger 1 = Enabled.
 }
 
-volatile int step = 0;
-void EXTI9_5_IRQHandler(void) {
-    EXTI_PR |= (1 << 9);  // Clear pending
-
-    // Reset all LEDs
-    GPIO('A')->ODR &= ~((1 << 5) | (1 << 6) | (1 << 7));
-    GPIO('B')->ODR &= ~(1 << 6);
-    GPIO('C')->ODR &= ~(1 << 7);
-
-    // Toggle current LED
-    switch (step) {
-        case 0: GPIO('A')->ODR |= (1 << 5); break;
-        case 1: GPIO('A')->ODR |= (1 << 6); break;
-        case 2: GPIO('A')->ODR |= (1 << 7); break;
-        case 3: GPIO('B')->ODR |= (1 << 6); break;
-        case 4: GPIO('C')->ODR |= (1 << 7); break;
+int SysTick_Config(uint32_t ticks){
+    if(ticks > 0xFFFFFF){
+        return 1;
     }
 
-    step = (step + 1) % 5;
+    SYST_RVR = ticks - 1;                                     // setting the reload register
+    SYST_CVR = 0;                                             // clear current value register
+    SYST_CSR = 0x07;                                          // enabling clock source, tickint, enable systick timer
+
+    return 0; 
+
 }
+
+
+void SysTick_Handler(void){
+    current_time++;
+}
+
+
+volatile int step = 0;
+void EXTI9_5_IRQHandler(void) {
+    if(EXTI_PR & (1 << 9)){
+        uint32_t time_now = current_time;
+
+        if((time_now - last_button_press_time) > DEBOUNCE_DELAY){
+               // Reset all LEDs
+            GPIO('A')->ODR &= ~((1 << 5) | (1 << 6) | (1 << 7));
+            GPIO('B')->ODR &= ~(1 << 6);
+            GPIO('C')->ODR &= ~(1 << 7);
+
+            // Toggle current LED
+            switch (step) {
+                case 0: GPIO('A')->ODR |= (1 << 5); break;
+                case 1: GPIO('A')->ODR |= (1 << 6); break;
+                case 2: GPIO('A')->ODR |= (1 << 7); break;
+                case 3: GPIO('B')->ODR |= (1 << 6); break;
+                case 4: GPIO('C')->ODR |= (1 << 7); break;
+            }
+
+            step = (step + 1) % 5;
+
+            last_button_press_time = time_now;
+        }
+
+        EXTI_PR |= (1 << 9);  // Clear pending
+    }
+
+}
+
+
+
 
 
 /* === gpio_init_pin ===
@@ -65,7 +101,7 @@ void EXTI9_5_IRQHandler(void) {
  * - Sets mode, output type, speed, and pull-up/down configuration
  */
 void gpio_init_pin(gpio_config_t cfg) {
-    struct gpio *gpio = GPIO(PINBANK(cfg.pin) + 'A');              // Get GPIO port base address
+    struct gpio *gpio = GPIO(PINBANK(cfg.pin) + 'A');        // Get GPIO port base address
     uint8_t gpio_pin = PINNO(cfg.pin);                       // Extract pin number (0–15)
 
     rcc_gpio_enr(PINBANK(cfg.pin));                          // Enable clock for this GPIO bank

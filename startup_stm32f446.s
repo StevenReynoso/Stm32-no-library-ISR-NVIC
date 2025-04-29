@@ -38,7 +38,7 @@ _vector_table:
     .word Debug_Monitor
     .word 0
     .word PendSV
-    .word Systick
+    .word SysTick_Handler
     .word 0          // IRQ0: WWDG
     .word 0          // IRQ1: PVD
     .word 0          // IRQ2: TAMP_STAMP
@@ -106,16 +106,16 @@ infinite_loop:
    Weak aliases that point to infinite loop
    Can be overridden in user code
 */
-.weak NMI, Hard_Fault, Mem_Manage, Bus_Fault, Usage_Fault, SVCall, Debug_Monitor, PendSV, Systick, EXTI9_5_IRQHandler
-.thumb_set NMI,           infinite_loop
-.thumb_set Hard_Fault,    infinite_loop
-.thumb_set Mem_Manage,    infinite_loop
-.thumb_set Bus_Fault,     infinite_loop
-.thumb_set Usage_Fault,   infinite_loop
-.thumb_set SVCall,        infinite_loop
-.thumb_set Debug_Monitor, infinite_loop
-.thumb_set PendSV,        infinite_loop
-.thumb_set Systick,       infinite_loop
+.weak NMI, Hard_Fault, Mem_Manage, Bus_Fault, Usage_Fault, SVCall, Debug_Monitor, PendSV, SysTick_Handler, EXTI9_5_IRQHandler
+.thumb_set NMI,                   infinite_loop
+.thumb_set Hard_Fault,            infinite_loop
+.thumb_set Mem_Manage,            infinite_loop
+.thumb_set Bus_Fault,             infinite_loop
+.thumb_set Usage_Fault,           infinite_loop
+.thumb_set SVCall,                infinite_loop
+.thumb_set Debug_Monitor,         infinite_loop
+.thumb_set PendSV,                infinite_loop
+.thumb_set SysTick_Handler,       infinite_loop
 
 /* EXTI9_5_IRQHandler is implemented in C, so do not alias it */
 

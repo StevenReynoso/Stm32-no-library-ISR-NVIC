@@ -7,6 +7,13 @@ struct gpio {
     volatile uint32_t MODER, OTYPER, OSPEEDR, PUPDR, IDR, ODR;
 };
 
+
+#define DEBOUNCE_DELAY 150
+
+#define SYST_CSR (*(volatile uint32_t *) (0xE000E010))                       // Systick Control Status Register
+#define SYST_RVR (*(volatile uint32_t *) (0xE000E014))                       // Systick Reload Value Register
+#define SYST_CVR (*(volatile uint32_t *) (0xE000E018))                       // Systick Current Value Register
+
                                                                              // RESET CLOCK CONTROL (RCC)
 #define RCC_AHB1ENR (*(volatile uint32_t *) (0x40023800 + 0x30))             // RCC AHB1 Peripheral Clock enable register
 #define RCC_APB2ENR (*(volatile uint32_t *) (0x40023800 + 0x44))             // RCC APB2 ENABLE REGISTER
@@ -21,11 +28,11 @@ struct gpio {
 #define NVIC_ISER0 (*(volatile uint32_t *) (0xE000E100))                     // Not in memory map, but in core-side
                                                                              // NVIC - Nested Vector Interupt Controller, ISER - Interupt Set Enable Register
 
-
 #define GPIO(bank) ((struct gpio *)(0x40020000 + (0x400 * ((bank) - 'A'))))  // Macro to access a gpio peripheral base address
 #define PIN(bank, num) (((bank - 'A') << 8) | (num))                         // macro to encode a pin using a bank and number: Pin(A, 5) = 0x0005
 #define PINNO(pin) ((pin) & 0xFF)                                            // Extract pin number 0 - 15 from encoded pin
 #define PINBANK(pin) ((pin) >> 8)                                            // extract bank number 0 for A, 1 for B.. from encoded pin
+
 
 typedef enum {                                                               // GPIO MODE options for MODER register
     GPIO_MODE_INPUT       = 0x00,                                
@@ -63,7 +70,7 @@ typedef struct{                                                             // G
 void gpio_init_pin(gpio_config_t cfg);
 void gpio_set_mode(uint16_t pin, uint8_t mode);
 void rcc_gpio_enr(uint8_t bank_num);
-void EXTI9_5_IRQHandler(void);
+int SysTick_Config(uint32_t ticks);
 void nvic_enable_irq(void);
 void exti_init(void);
 #endif //GPIO_H
