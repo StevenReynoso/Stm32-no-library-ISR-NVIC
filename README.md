@@ -1,76 +1,62 @@
-# STM32 Bare-Metal LED Control with Interrupts (NVIC & EXTI)
+# STM32F4 Bare-Metal Interrupt-Driven LED Controller
 
-This project demonstrates how to control multiple LEDs on an STM32 microcontroller **without using any libraries (no HAL, no CMSIS)**. It includes **external interrupt handling (EXTI)** via **NVIC**, triggered by a push-button to cycle through LEDs.
+This project demonstrates a fully bare-metal implementation of GPIO control, external interrupts (EXTI), and system timer configuration (SysTick) on the STM32F4 series microcontroller (STM32F446RE). It does not rely on STM32 HAL, CMSIS drivers, or external libraries. All peripheral configurations are handled through direct register access.
 
-## 🧠 What You'll Learn
-- Direct register manipulation for GPIO setup
-- Configuring external interrupts using **EXTI** and **NVIC**
-- Writing your own startup file, linker script, and vector table
-- Debugging with `gdb` and `st-util`
+## Project Overview
 
----
+A push-button is connected to GPIOA pin 9. When pressed, it triggers an interrupt using EXTI line 9. To avoid false triggers due to mechanical bouncing, the project implements software-based debouncing using the Cortex-M4 SysTick timer. Each valid press cycles through five LEDs connected to various GPIO pins (PA5–PA7, PB6, and PC7).
 
-## 🚀 Features
+## Features
 
-- **Interrupt-Driven**: A button connected to `PA9` triggers an external interrupt to cycle through 5 LEDs.
-- **Bare-Metal Only**: No CMSIS, no HAL, full control over registers and memory layout.
-- **Custom Startup Code**: Startup file initializes `.data`/`.bss` and jumps to `main()`.
-- **Clean LED Blinking**: GPIOs toggle using hardcoded config for minimal memory usage.
-- **Heart-Beat Debugging**: `PC7` toggles inside main loop to show the system is alive.
+- Manual GPIO pin initialization using RCC and GPIOx registers
+- External interrupt configuration using EXTI and SYSCFG
+- NVIC interrupt enabling for EXTI9_5
+- Software debounce using SysTick timer (1 ms tick)
+- LED cycling with each debounced button press
+- No external libraries or runtime dependencies
 
----
+## Hardware Connections
 
-## 🛠️ Hardware Requirements
+- **Button**: GPIOA pin 9 (configured with internal pull-up)
+- **LEDs**:
+  - PA5 (Red)
+  - PA6 (Blue)
+  - PA7 (Yellow)
+  - PB6 (Green)
+  - PC7 (White)
 
-- STM32 Nucleo Board (e.g., STM32F446RE)
-- 5 LEDs + 220Ω resistors
-- 1 Push Button
-- Breadboard and jumper wires
-- ST-Link or equivalent debugger
+## File Structure
 
----
+- `main.c` - Sets up GPIOs, button, EXTI, and SysTick. Contains main loop.
+- `gpio.c/.h` - Low-level GPIO, RCC, NVIC, EXTI, and SysTick configuration functions.
+- `startup.s` - Cortex-M4 startup assembly with interrupt vector table.
+- `linker.ld` - Custom linker script defining memory layout.
+- `Makefile` - Builds the binary, creates `.elf` and `.bin`, and supports flashing.
 
-## 🧰 Setup Instructions
+## Build and Flash
 
-### 1. Wiring Guide
-
-| Pin     | LED Color | Description     |
-|---------|-----------|-----------------|
-| PA5     | Red       | LED Output      |
-| PA6     | Blue      | LED Output      |
-| PA7     | Yellow    | LED Output      |
-| PB6     | Green     | LED Output      |
-| PC7     | White     | LED Output      |
-| PA9     | —         | Button Input    |
-
-🟢 **Pull-up is configured via internal register for PA9**  
-🟢 LEDs should be wired with their cathodes to GND via resistors
-
----
-
-### 2. Build & Flash
-
-Ensure `arm-none-eabi-gcc`, `make`, and `st-flash` are installed.
+1. Ensure `arm-none-eabi-gcc` and `st-flash` are installed.
+2. Run the following commands:
 
 ```bash
-# Build
-make
-
-# Flash binary to STM32
-make flash
+make            # Build the project
+make flash      # Flash the binary to the STM32 board
 ```
+## Key Concepts Demonstrated
 
-## For Debugging
-- Start ST-Link server
-- st-util
+    Bare-metal system initialization without HAL or CMSIS
 
-- In another terminal, start GDB
-- gdb-multiarch build/main.elf
+    Direct register manipulation for GPIO and peripheral control
 
-- Inside GDB:
-- target extended-remote :4242
-- monitor reset halt
-- break EXTI9_5_IRQHandler
-- continue
+    Efficient interrupt-driven design with minimal CPU load
 
+    Real-time debounce using a hardware timer (SysTick)
+
+    Clean separation of startup code, application logic, and hardware control
+
+## Target MCU
+
+- STM32F446RE (Cortex-M4 core)
+
+- This code can be adapted to other STM32F4 series chips with minor modifications to GPIO port and clock configuration
 
