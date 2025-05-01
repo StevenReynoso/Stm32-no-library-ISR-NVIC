@@ -12,7 +12,7 @@ volatile uint8_t button_pressed = 0;
  * - Updates only the relevant bits in MODER.
  */
 inline void gpio_set_mode(uint16_t pin, uint8_t mode) {
-    struct gpio *gpio = GPIO(PINBANK(pin));                   // Get pointer to GPIO port struct
+    struct gpio *gpio = GPIO(PINBANK(pin) + 'A');                   // Get pointer to GPIO port struct
     uint8_t gpio_pin = PINNO(pin);                            // Extract pin number (0–15)
 
     gpio->MODER &= ~(0x3U << (gpio_pin * 2));                 // Clear the 2 bits for this pin
